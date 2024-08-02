@@ -35,6 +35,8 @@ public class PartialUpdateOperationProcessor extends BaseOperation implements Pa
     @Override
     @Transactional
     public Either<Errors, PartialUpdateOutput> process(PartialUpdateInput input) {
+        // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
+        // и за следене на изпълнението на операцията.
         return Try.of(() -> {
                     log.info("Starting partial update operation for input: {}", input);
                     validate(input);

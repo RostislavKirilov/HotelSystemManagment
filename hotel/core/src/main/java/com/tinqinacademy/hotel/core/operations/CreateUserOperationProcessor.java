@@ -34,6 +34,8 @@ public class CreateUserOperationProcessor extends BaseOperation implements Creat
     @Override
     @Transactional
     public Either<Errors, CreateUserOutput> process(CreateUserInput input) {
+        // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
+        // и за следене на изпълнението на операцията.
         return Try.of(() -> {
                     log.info("Start creating user input: {}", input);
 

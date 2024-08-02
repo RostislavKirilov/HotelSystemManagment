@@ -32,9 +32,12 @@ public class AvailableRoomsOperationProcessor extends BaseOperation implements A
 
     @Override
     public Either<Errors, AvailableRoomsOutput> process(AvailableRoomsInput input) {
+        // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
+        // и за следене на изпълнението на операцията.
         return Try.of(() -> {
                     log.info("Start checking available rooms with input: {}", input);
                     validate(input);
+
 
                     List<Room> availableRooms = roomRepository.findAvailableRooms(input.getStartDate(), input.getEndDate())
                             .stream()
@@ -60,6 +63,9 @@ public class AvailableRoomsOperationProcessor extends BaseOperation implements A
                 .toEither()
                 .mapLeft(this::handleErrors);
     }
+
+    // Преобразува грешката в ErrorOutput, грешките се форматират, за да се върнат
+    //в подходят вид на клиента
     private Errors handleErrors ( Throwable throwable ) {
         ErrorOutput errorOutput = matchError(throwable);
         return new Errors(List.of(Error.builder()
@@ -67,7 +73,8 @@ public class AvailableRoomsOperationProcessor extends BaseOperation implements A
                 .build()).toString());
     }
 
-//add comment
+
+
 
     private ErrorOutput matchError(Throwable throwable) {
         return io.vavr.API.Match(throwable).of(

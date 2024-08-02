@@ -30,6 +30,8 @@ public class CreateRoomOperationProcessor extends BaseOperation implements Creat
         this.roomRepository = roomRepository;
     }
 
+    // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
+    // и за следене на изпълнението на операцията.
     @Override
     public Either<Errors, CreateRoomOutput> process(CreateRoomInput input) {
         return validateBathroomType(input.getBathroomType())

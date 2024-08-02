@@ -48,6 +48,8 @@ public class BookRoomOperationProcessor extends BaseOperation implements BookRoo
     @Override
     @Transactional
     public Either<Errors, BookRoomOutput> process(BookRoomInput input) {
+        // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
+        // и за следене на изпълнението на операцията.
         return Try.of(() -> {
                     log.info("Start booking room input: {}", input);
                     validate(input);

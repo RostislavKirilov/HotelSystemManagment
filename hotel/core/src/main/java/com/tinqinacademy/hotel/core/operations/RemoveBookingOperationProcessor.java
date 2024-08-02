@@ -35,6 +35,8 @@ public class RemoveBookingOperationProcessor extends BaseOperation implements Re
     @Override
     @Transactional
     public Either<Errors, RemoveBookingOutput> process(RemoveBookingInput input) {
+        // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
+        // и за следене на изпълнението на операцията.
         return Try.of(() -> {
                     log.info("Start removing booking input: {}", input);
                     validateInput(input);
