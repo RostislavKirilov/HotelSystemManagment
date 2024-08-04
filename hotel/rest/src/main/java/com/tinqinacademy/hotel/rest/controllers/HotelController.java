@@ -55,7 +55,14 @@ public class HotelController extends BaseOperation {
     private final AvailableRoomsOperationProcessor availableRoomsOperationProcessor;
     private final VisitorRegistrationOperationProcessor visitorRegistrationOperationProcessor;
 
-    public HotelController ( Validator validator, ConversionService conversionService, ErrorMapper errorMapper, RoomRepository roomRepository, RoomToRoomIdConverter roomToRoomIdConverter, BookRoomOperationProcessor bookRoomOperationProcessor, CreateRoomOperationProcessor createRoomOperationProcessor, DeleteRoomOperationProcessor deleteRoomOperationProcessor, RemoveBookingOperation removeBookingOperation, AvailableRoomsOperationProcessor availableRoomsOperationProcessor, VisitorRegistrationOperationProcessor visitorRegistrationOperationProcessor ) {
+    public HotelController (Validator validator, ConversionService conversionService, ErrorMapper errorMapper,
+                            RoomRepository roomRepository, RoomToRoomIdConverter roomToRoomIdConverter,
+                            BookRoomOperationProcessor bookRoomOperationProcessor,
+                            CreateRoomOperationProcessor createRoomOperationProcessor,
+                            DeleteRoomOperationProcessor deleteRoomOperationProcessor,
+                            RemoveBookingOperation removeBookingOperation,
+                            AvailableRoomsOperationProcessor availableRoomsOperationProcessor,
+                            VisitorRegistrationOperationProcessor visitorRegistrationOperationProcessor) {
         super(validator, conversionService, errorMapper);
         this.roomRepository = roomRepository;
         this.roomToRoomIdConverter = roomToRoomIdConverter;
@@ -67,9 +74,8 @@ public class HotelController extends BaseOperation {
         this.visitorRegistrationOperationProcessor = visitorRegistrationOperationProcessor;
     }
 
-
     @PostMapping("/book")
-    public ResponseEntity<String> bookRoom(
+    public ResponseEntity<?> bookRoom(
             @RequestParam String roomId,
             @RequestParam String userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -98,15 +104,15 @@ public class HotelController extends BaseOperation {
 
             if (result.isRight()) {
                 log.info("Booking successful for roomId={}", roomId);
-                return ResponseEntity.ok("Booking successful");
+                return ResponseEntity.ok(result.get());
             } else {
                 Errors errors = result.getLeft();
                 log.warn("Booking failed: {}", errors.getMessage());
-                return ResponseEntity.badRequest().body(errors.getMessage());
+                return ResponseEntity.badRequest().body(errors);
             }
         } catch (Exception e) {
             log.error("An unexpected error occurred while booking the room.", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorOutput(List.of(new Errors("Unexpected error")), HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -117,19 +123,17 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "400", description = "Invalid data!"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<String> addRoom ( @RequestBody @Validated CreateRoomInput createRoomInput ) {
+    public ResponseEntity<?> addRoom (@RequestBody @Validated CreateRoomInput createRoomInput) {
         Either<Errors, CreateRoomOutput> result = createRoomOperationProcessor.process(createRoomInput);
 
         if (result.isRight()) {
             CreateRoomOutput createRoomOutput = result.get();
-            String successMessage = createRoomOutput.getMessage();
-            return ResponseEntity.status(HttpStatus.CREATED).body(successMessage);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createRoomOutput);
         } else {
             Errors errors = result.getLeft();
-            return ResponseEntity.badRequest().body(errors.getMessage());
+            return ResponseEntity.badRequest().body(errors);
         }
     }
-
 
     @DeleteMapping("/booking/{bookId}")
     @Operation(summary = "Remove booking")
@@ -139,7 +143,7 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "404", description = "Booking not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<String> removeBooking ( @PathVariable String bookId ) {
+    public ResponseEntity<?> removeBooking (@PathVariable String bookId) {
         RemoveBookingInput input = RemoveBookingInput.builder()
                 .bookingId(bookId)
                 .build();
@@ -147,17 +151,10 @@ public class HotelController extends BaseOperation {
         Either<Errors, RemoveBookingOutput> result = removeBookingOperation.process(input);
 
         if (result.isRight()) {
-            return ResponseEntity.status(HttpStatus.CREATED).body("Booking removed!");
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         } else {
             Errors errors = result.getLeft();
-            String errorMessage = errors.getErrors().isEmpty() ? "An error occurred" : errors.getErrors().get(0).getMessage();
-
-            HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-            if (!errors.getErrors().isEmpty()) {
-                errors.getErrors().get(0).getCode();
-            }
-
-            return ResponseEntity.status(status).body(errorMessage);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
     }
 
@@ -170,7 +167,7 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "409", description = "Conflict. Room is not available for the selected dates."),
             @ApiResponse(responseCode = "500", description = "Internal server error.")
     })
-    public ResponseEntity<String> registerVisitorAsRenterNew(@RequestBody @Validated VisitorRegistrationInput visitorInput) {
+    public ResponseEntity<?> registerVisitorAsRenterNew(@RequestBody @Validated VisitorRegistrationInput visitorInput) {
         Either<Errors, VisitorRegistrationOutput> result = visitorRegistrationOperationProcessor.process(visitorInput);
 
         if (result.isRight()) {
@@ -182,23 +179,26 @@ public class HotelController extends BaseOperation {
             room.setGuestId(output.getGuestId());
             roomRepository.save(room);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body("Visitor registered successfully.");
+            return ResponseEntity.status(HttpStatus.CREATED).body(output);
         } else {
             Errors error = result.getLeft();
-            String errorMessage = error.getMessage();
+            return ResponseEntity.status(determineHttpStatus(error)).body(error);
+        }
+    }
 
-            if (errorMessage.contains("Room not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
-            } else if (errorMessage.contains("Room is not available for the selected dates")) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(errorMessage);
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
-            }
+    private HttpStatus determineHttpStatus(Errors error) {
+        String errorMessage = error.getMessage();
+        if (errorMessage.contains("Room not found")) {
+            return HttpStatus.NOT_FOUND;
+        } else if (errorMessage.contains("Room is not available for the selected dates")) {
+            return HttpStatus.CONFLICT;
+        } else {
+            return HttpStatus.BAD_REQUEST;
         }
     }
 
     @GetMapping("/available-rooms")
-    public ResponseEntity<?> getAvailableRooms ( @RequestParam LocalDate startDate, @RequestParam LocalDate endDate ) {
+    public ResponseEntity<?> getAvailableRooms (@RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
         try {
             List<Room> availableRooms = roomRepository.findAvailableRooms(startDate, endDate);
             if (availableRooms.isEmpty()) {
@@ -206,13 +206,11 @@ public class HotelController extends BaseOperation {
             }
             return ResponseEntity.ok(availableRooms);
         } catch (Exception e) {
-            System.err.println("Error while fetching available rooms: " + e.getMessage());
+            log.error("Error while fetching available rooms: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorOutput(List.of(new Errors("Unexpected error")), HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
-
-
     @GetMapping("/{roomId}")
     @Operation(summary = "Get room by ID")
     @ApiResponses(value = {
@@ -221,7 +219,7 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "400", description = "Invalid data"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<RoomId> getRoomById ( @PathVariable UUID roomId ) {
+    public ResponseEntity<RoomId> getRoomById (@PathVariable UUID roomId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -245,7 +243,7 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "404", description = "Room not found"),
             @ApiResponse(responseCode = "400", description = "Invalid data"),
     })
-    public ResponseEntity<String> deleteRoom ( @PathVariable String id ) {
+    public ResponseEntity<String> deleteRoom (@PathVariable String id) {
         log.info("Attempting to delete room with ID: {}", id);
 
         Either<Errors, DeleteRoomOutput> result = deleteRoomOperationProcessor.process(new DeleteRoomInput(id));

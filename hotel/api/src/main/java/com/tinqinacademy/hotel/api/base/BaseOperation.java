@@ -31,6 +31,12 @@ public abstract class BaseOperation {
     protected final ConversionService conversionService;
     protected final ErrorMapper errorMapper;
 
+    /**
+     * Валидация на входящи данни.
+     * Той проверява дали данните отговарят на зададените ограничения и правила за валидност.
+     * Ако има нарушения - `InvalidInputException`.
+     */
+
     public <T extends OperationInput> void validate(T input) {
         Set<ConstraintViolation<T>> violations = validator.validate(input);
 
