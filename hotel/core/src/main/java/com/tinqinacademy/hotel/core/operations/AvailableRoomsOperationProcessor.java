@@ -73,9 +73,6 @@ public class AvailableRoomsOperationProcessor extends BaseOperation implements A
                 .build()).toString());
     }
 
-
-
-
     private ErrorOutput matchError(Throwable throwable) {
         return io.vavr.API.Match(throwable).of(
                 caseRoomNotFound(throwable),
@@ -86,5 +83,4 @@ public class AvailableRoomsOperationProcessor extends BaseOperation implements A
                 defaultCase(throwable)
         );
     }
-
 }

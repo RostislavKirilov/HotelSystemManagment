@@ -1,59 +1,85 @@
 package com.tinqinacademy.hotel.rest.controllers;
 
-import com.tinqinacademy.hotel.api.operations.VisitorDetails;
+import com.tinqinacademy.hotel.api.operations.VisitorRegistration.VisitorRegistrationInput;
 import com.tinqinacademy.hotel.api.operations.partialupdate.PartialUpdateInput;
 import com.tinqinacademy.hotel.api.operations.updateroom.UpdateRoomInput;
 import com.tinqinacademy.hotel.core.operations.PartialUpdateOperationProcessor;
 import com.tinqinacademy.hotel.core.operations.UpdateRoomOperationProcessor;
 import com.tinqinacademy.hotel.core.services.RoomService;
+import com.tinqinacademy.hotel.persistence.entitites.Guest;
+import com.tinqinacademy.hotel.persistence.entitites.Room;
 import com.tinqinacademy.hotel.persistence.models.Bed;
+import com.tinqinacademy.hotel.persistence.repository.GuestRepository;
+import com.tinqinacademy.hotel.persistence.repository.RoomRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.format.annotation.DateTimeFormat;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
+@Slf4j
 @RequestMapping("/system")
 public class AdminController {
 
     private final RoomService roomService;
     private final UpdateRoomOperationProcessor updateRoomOperationProcessor;
     private final PartialUpdateOperationProcessor partialUpdateOperationProcessor;
+    private final RoomRepository roomRepository;
+    private final GuestRepository guestRepository;
     private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
 
-    public AdminController ( RoomService roomService, UpdateRoomOperationProcessor updateRoomOperationProcessor, PartialUpdateOperationProcessor partialUpdateOperationProcessor ) {
+    public AdminController ( RoomService roomService, UpdateRoomOperationProcessor updateRoomOperationProcessor, PartialUpdateOperationProcessor partialUpdateOperationProcessor, RoomRepository roomRepository, GuestRepository guestRepository ) {
         this.roomService = roomService;
-
         this.updateRoomOperationProcessor = updateRoomOperationProcessor;
         this.partialUpdateOperationProcessor = partialUpdateOperationProcessor;
+        this.roomRepository = roomRepository;
+        this.guestRepository = guestRepository;
     }
 
+    // Endpoint, необходим за следене
+    // на информацията на посетителите
+    @PostMapping("/register")
+    @Operation(summary = "Registers a new visitor")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Visitor registered successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid data provided"),
+            @ApiResponse(responseCode = "500", description = "Internal server error"),
+            @ApiResponse(responseCode = "404", description = "Room not found")
+    })
+    public ResponseEntity<String> registerVisitor(@RequestBody @Valid VisitorRegistrationInput input) {
+        log.info("Received registration request for room number: {}", input.getRoomId());
+        Optional<Room> optionalRoom = roomRepository.findByRoomNumber(String.valueOf(input.getRoomId()));
+        if (optionalRoom.isEmpty()) {
+            log.error("Room not found for room number: {}", input.getRoomId());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Room not found");
+        }
 
-    @GetMapping("/register")
-    public ResponseEntity<List<VisitorDetails>> getVisitors(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam String firstName,
-            @RequestParam String lastName,
-            @RequestParam String phoneNo,
-            @RequestParam String idCardNo,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate idCardValidity,
-            @RequestParam String idCardIssueAuthority,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate idCardIssueDate,
-            @RequestParam String roomNo
-    ) {
-        List<VisitorDetails> visitors = List.of();
-        return ResponseEntity.ok(visitors);
+        Room room = optionalRoom.get();
+        Guest guest = Guest.builder()
+                .firstName(input.getFirstName())
+                .lastName(input.getLastName())
+                .startDate(input.getStartDate())
+                .endDate(input.getEndDate())
+                .phoneNo(input.getPhoneNo())
+                .idCardNo(input.getIdCardNo())
+                .idCardValidity(input.getIdCardValidity())
+                .idCardIssueAuthority(input.getIdCardIssueAuthority())
+                .idCardIssueDate(input.getIdCardIssueDate())
+                .room(room)
+                .build();
+
+        guestRepository.save(guest);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Visitor registered successfully");
     }
 
     @PutMapping("/room/{roomId}")
@@ -64,11 +90,12 @@ public class AdminController {
             @ApiResponse(responseCode = "404", description = "Room not found."),
             @ApiResponse(responseCode = "500", description = "Internal server error.")
     })
-    public ResponseEntity<Object> editInfo(
+    public ResponseEntity<Object> editInfo (
             @PathVariable("roomId") UUID roomId,
-            @RequestBody @Validated UpdateRoomInput input) {
+            @RequestBody @Validated UpdateRoomInput input ) {
         logger.info("Attempting to update room with ID: {}", roomId);
 
+        // Validate input
         if (input == null) {
             logger.error("Input data is null");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -96,6 +123,7 @@ public class AdminController {
 
             var result = updateRoomOperationProcessor.process(updateRoomInput);
 
+            // резултат на базата на не/успех
             return result
                     .map(updatedRoom -> ResponseEntity.ok().build())
                     .mapLeft(errors -> {
@@ -112,7 +140,6 @@ public class AdminController {
         }
     }
 
-
     @PatchMapping("/room")
     @Operation(summary = "Partially update room information")
     @ApiResponses(value = {
@@ -121,7 +148,7 @@ public class AdminController {
             @ApiResponse(responseCode = "404", description = "Room not found."),
             @ApiResponse(responseCode = "500", description = "Internal server error.")
     })
-    public ResponseEntity<Object> partialUpdateRoom( @RequestBody @Validated PartialUpdateInput input) {
+    public ResponseEntity<Object> partialUpdateRoom ( @RequestBody @Validated PartialUpdateInput input ) {
         try {
             if (input == null || input.getRoomId() == null || input.getRoomId().isEmpty()) {
                 logger.error("Input data is missing or room ID is null.");
@@ -154,4 +181,3 @@ public class AdminController {
         }
     }
 }
-
