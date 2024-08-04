@@ -44,7 +44,8 @@ public class VisitorRegistrationOperationProcessor extends BaseOperation impleme
     @Transactional
     public Either<Errors, VisitorRegistrationOutput> process(VisitorRegistrationInput input) {
         // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
-        // и за следене на изпълнението на операцията.
+        // и за следене на изпълнението на операцията.........
+        //...
         return Try.of(() -> {
                     log.info("Start visitor registration input: {}", input);
                     validate(input);
