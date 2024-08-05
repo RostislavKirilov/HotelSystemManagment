@@ -1,5 +1,6 @@
 package com.tinqinacademy.hotel.rest.controllers;
 
+import com.tinqinacademy.hotel.api.contracts.RestApiRoutes;
 import com.tinqinacademy.hotel.api.operations.VisitorRegistration.VisitorRegistrationInput;
 import com.tinqinacademy.hotel.api.operations.partialupdate.PartialUpdateInput;
 import com.tinqinacademy.hotel.api.operations.updateroom.UpdateRoomInput;
@@ -48,7 +49,7 @@ public class AdminController {
 
     // Endpoint, необходим за следене
     // на информацията на посетителите
-    @PostMapping("/register")
+    @PostMapping(RestApiRoutes.REGISTER_VISITOR)
     @Operation(summary = "Registers a new visitor")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Visitor registered successfully"),
@@ -82,7 +83,7 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Visitor registered successfully");
     }
 
-    @PutMapping("/room/{roomId}")
+    @PutMapping(RestApiRoutes.UPDATE_ROOM)
     @Operation(summary = "Update room information")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Room information successfully updated."),
@@ -140,7 +141,7 @@ public class AdminController {
         }
     }
 
-    @PatchMapping("/room")
+    @PatchMapping(RestApiRoutes.PARTIAL_UPDATE_ROOM)
     @Operation(summary = "Partially update room information")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Room successfully updated."),

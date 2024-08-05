@@ -1,6 +1,7 @@
 package com.tinqinacademy.hotel.rest.controllers;
 
 import com.tinqinacademy.hotel.api.base.BaseOperation;
+import com.tinqinacademy.hotel.api.contracts.RestApiRoutes;
 import com.tinqinacademy.hotel.api.errors.ErrorMapper;
 import com.tinqinacademy.hotel.api.errors.ErrorOutput;
 import com.tinqinacademy.hotel.api.errors.Errors;
@@ -41,7 +42,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/hotel")
+@RequestMapping(RestApiRoutes.API_HOTEL)
 @ControllerAdvice
 public class HotelController extends BaseOperation {
 
@@ -74,7 +75,7 @@ public class HotelController extends BaseOperation {
         this.visitorRegistrationOperationProcessor = visitorRegistrationOperationProcessor;
     }
 
-    @PostMapping("/book")
+    @PostMapping(RestApiRoutes.BOOK_ROOM)
     public ResponseEntity<?> bookRoom(
             @RequestParam String roomId,
             @RequestParam String userId,
@@ -116,7 +117,7 @@ public class HotelController extends BaseOperation {
         }
     }
 
-    @PostMapping("/room/add")
+    @PostMapping(RestApiRoutes.ADD_ROOM)
     @Operation(summary = "Add a room")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Room is added!"),
@@ -135,7 +136,7 @@ public class HotelController extends BaseOperation {
         }
     }
 
-    @DeleteMapping("/booking/{bookId}")
+    @DeleteMapping(RestApiRoutes.REMOVE_BOOKING)
     @Operation(summary = "Remove booking")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Successfully removed booking."),
@@ -158,7 +159,7 @@ public class HotelController extends BaseOperation {
         }
     }
 
-    @PostMapping("/system/register-new")
+    @PostMapping(RestApiRoutes.REGISTER_VISITOR)
     @Operation(summary = "Registers a visitor as room renter or guest")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Visitor registered as room renter or guest, new resource created."),
@@ -197,7 +198,7 @@ public class HotelController extends BaseOperation {
         }
     }
 
-    @GetMapping("/available-rooms")
+    @GetMapping(RestApiRoutes.AVAILABLE_ROOMS)
     public ResponseEntity<?> getAvailableRooms (@RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
         try {
             List<Room> availableRooms = roomRepository.findAvailableRooms(startDate, endDate);
@@ -211,7 +212,7 @@ public class HotelController extends BaseOperation {
                     .body(new ErrorOutput(List.of(new Errors("Unexpected error")), HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
-    @GetMapping("/{roomId}")
+    @GetMapping(RestApiRoutes.FIND_ROOM)
     @Operation(summary = "Get room by ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Room found"),
@@ -236,7 +237,7 @@ public class HotelController extends BaseOperation {
         return ResponseEntity.ok(roomIdDto);
     }
 
-    @DeleteMapping("/deleteRoomById/{id}")
+    @DeleteMapping(RestApiRoutes.DELETE_ROOM)
     @Operation(summary = "Deletes room by Id.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Room deleted!"),
