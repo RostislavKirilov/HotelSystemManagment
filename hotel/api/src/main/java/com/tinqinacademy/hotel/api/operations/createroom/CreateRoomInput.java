@@ -1,8 +1,7 @@
 package com.tinqinacademy.hotel.api.operations.createroom;
 
 import com.tinqinacademy.hotel.api.base.OperationInput;
-import com.tinqinacademy.hotel.persistence.models.BathroomType;
-import com.tinqinacademy.hotel.persistence.models.Bed;
+import com.tinqinacademy.hotel.api.customannotations.ValidBed;
 import com.tinqinacademy.hotel.persistence.models.RoomStatus;
 import lombok.*;
 
@@ -29,16 +28,12 @@ public class CreateRoomInput implements OperationInput {
     @NotNull
     private BigDecimal price;
 
-    @NotNull
-    private Bed bedSize;
+    @ValidBed
+    private String bedSize;
 
     @Getter
     private List<String> bedSizes;
 
     private RoomStatus status;
-
-    public void setBedSizes(List<String> bedSizes) {
-        this.bedSizes = bedSizes;
-    }
 
 }
