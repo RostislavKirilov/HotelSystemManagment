@@ -54,8 +54,8 @@ public class BookRoomOperationProcessor extends BaseOperation implements BookRoo
                     log.info("Start booking room input: {}", input);
                     validate(input);
 
-                    UUID roomId = input.getRoomId();
-                    UUID userId = input.getUserId();
+                    UUID roomId = UUID.fromString(input.getRoomId());
+                    UUID userId = UUID.fromString(input.getUserId());
 
                     Room room = roomRepository.findById(roomId)
                             .orElseThrow(() -> new RuntimeException(ExceptionMessages.ROOM_NOT_FOUND + " for ID: " + roomId));
@@ -82,7 +82,7 @@ public class BookRoomOperationProcessor extends BaseOperation implements BookRoo
                             .build();
                     Booking savedBooking = bookingRepository.save(booking);
                     return BookRoomOutput.builder()
-                            .bookingId(savedBooking.getId())
+                            .bookingId(String.valueOf(savedBooking.getId()))
                             .build();
                 })
                 .toEither()

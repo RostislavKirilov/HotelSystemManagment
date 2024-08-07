@@ -1,13 +1,14 @@
 package com.tinqinacademy.hotel.api.base;
 
+import com.tinqinacademy.hotel.api.messages.RoomNotFoundException;
 import com.tinqinacademy.hotel.api.errors.ErrorMapper;
 import com.tinqinacademy.hotel.api.errors.ErrorOutput;
 import com.tinqinacademy.hotel.api.errors.Errors;
-import com.tinqinacademy.hotel.api.exceptions.*;
+import com.tinqinacademy.hotel.api.exceptions.BedNotFoundException;
+import com.tinqinacademy.hotel.api.exceptions.UserNotFoundException;
 import com.tinqinacademy.hotel.api.messages.BookingNotFoundException;
 import com.tinqinacademy.hotel.api.messages.InvalidInputException;
 import com.tinqinacademy.hotel.api.messages.RoomAlreadyReserved;
-import com.tinqinacademy.hotel.api.messages.RoomNotFoundException;
 import io.vavr.API;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -53,11 +54,11 @@ public abstract class BaseOperation {
         }
     }
 
-    protected API.Match.Case<RoomNotFoundException, ErrorOutput> caseRoomNotFound(Throwable cause) {
+    protected API.Match.Case<RoomNotFoundException, ErrorOutput> caseRoomNotFound( Throwable cause) {
         return API.Case($(instanceOf(RoomNotFoundException.class)), errorMapper.map(cause, HttpStatus.NOT_FOUND));
     }
 
-    protected API.Match.Case<BedNotFoundException, ErrorOutput> caseBedNotFound(Throwable cause) {
+    protected API.Match.Case<BedNotFoundException, ErrorOutput> caseBedNotFound( Throwable cause) {
         return API.Case($(instanceOf(BedNotFoundException.class)), errorMapper.map(cause, HttpStatus.NOT_FOUND));
     }
 
@@ -65,7 +66,7 @@ public abstract class BaseOperation {
         return API.Case($(instanceOf(BookingNotFoundException.class)), errorMapper.map(cause, HttpStatus.NOT_FOUND));
     }
 
-    protected API.Match.Case<UserNotFoundException, ErrorOutput> caseUserNotFound(Throwable cause) {
+    protected API.Match.Case<UserNotFoundException, ErrorOutput> caseUserNotFound( Throwable cause) {
         return API.Case($(instanceOf(UserNotFoundException.class)), errorMapper.map(cause, HttpStatus.NOT_FOUND));
     }
 

@@ -1,5 +1,6 @@
-package com.tinqinacademy.hotel.api.operations;
+package com.tinqinacademy.hotel.api.operations.findroom;
 
+import com.tinqinacademy.hotel.api.base.OperationOutput;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -12,9 +13,9 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 @NoArgsConstructor
-public class RoomId {
+public class RoomId implements OperationOutput {
 
-    private String Id;
+    private String roomId;
     private BigDecimal price;
     private String floor;
     private String bedSize;

@@ -1,7 +1,6 @@
 package com.tinqinacademy.hotel.api.operations.updateroom;
 
 import com.tinqinacademy.hotel.api.base.OperationInput;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;

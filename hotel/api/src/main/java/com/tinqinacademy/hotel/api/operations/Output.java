@@ -1,8 +1,8 @@
 package com.tinqinacademy.hotel.api.operations;
 
 
-import com.tinqinacademy.hotel.persistence.models.BathroomType;
-import com.tinqinacademy.hotel.persistence.models.Bed;
+import com.tinqinacademy.hotel.api.models.BathroomType;
+import com.tinqinacademy.hotel.api.models.Bed;
 import lombok.*;
 
 import java.math.BigDecimal;

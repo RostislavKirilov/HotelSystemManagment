@@ -13,7 +13,7 @@ import java.util.UUID;
 @ToString
 public class BookRoomOutput implements OperationOutput {
 
-    private UUID bookingId;
+    private String bookingId;
 
 
 }

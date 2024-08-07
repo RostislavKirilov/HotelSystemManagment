@@ -2,7 +2,6 @@ package com.tinqinacademy.hotel.api.operations.reserveroom;
 
 import com.tinqinacademy.hotel.api.base.OperationInput;
 import com.tinqinacademy.hotel.api.customannotations.ValidBed;
-import com.tinqinacademy.hotel.persistence.models.Bed;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 

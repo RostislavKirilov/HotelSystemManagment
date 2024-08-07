@@ -1,7 +1,7 @@
 package com.tinqinacademy.hotel.persistence.repository;
 
-import com.tinqinacademy.hotel.persistence.entitites.Booking;
 import com.tinqinacademy.hotel.persistence.entitites.Room;
+import com.tinqinacademy.hotel.persistence.entitites.Booking;
 import com.tinqinacademy.hotel.persistence.models.RoomStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

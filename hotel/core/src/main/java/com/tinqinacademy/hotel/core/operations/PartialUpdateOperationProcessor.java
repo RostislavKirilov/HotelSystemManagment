@@ -46,7 +46,7 @@ public class PartialUpdateOperationProcessor extends BaseOperation implements Pa
                     Room room = roomRepository.findById(roomId)
                             .orElseThrow(() -> new IllegalArgumentException(ExceptionMessages.ROOM_NOT_FOUND + " for ID: " + roomId));
 
-                    room = input.toRoomEntity(room);
+                    //room = input.toRoomEntity(room);
 
                     Room updatedRoom = roomRepository.save(room);
 

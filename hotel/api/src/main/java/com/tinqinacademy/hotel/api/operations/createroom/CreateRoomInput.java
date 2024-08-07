@@ -2,7 +2,6 @@ package com.tinqinacademy.hotel.api.operations.createroom;
 
 import com.tinqinacademy.hotel.api.base.OperationInput;
 import com.tinqinacademy.hotel.api.customannotations.ValidBed;
-import com.tinqinacademy.hotel.persistence.models.RoomStatus;
 import lombok.*;
 
 import jakarta.validation.constraints.*;
@@ -34,6 +33,6 @@ public class CreateRoomInput implements OperationInput {
     @Getter
     private List<String> bedSizes;
 
-    private RoomStatus status;
+    //private RoomStatus status;
 
 }
