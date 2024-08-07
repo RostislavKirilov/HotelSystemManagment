@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@RequestMapping(RestApiRoutes.API_HOTEL)
 @ControllerAdvice
 public class HotelController extends BaseOperation {
 
@@ -73,38 +74,31 @@ public class HotelController extends BaseOperation {
         this.findRoomOperationProcessor = findRoomOperationProcessor;
         this.visitorRegistrationOperationProcessor = visitorRegistrationOperationProcessor;
     }
+}
 
-//    @PostMapping(RestApiRoutes.BOOK_ROOM)
-//    public ResponseEntity<?> bookRoom(
-//            @RequestParam UUID roomId,
-//            @RequestBody BookRoomInput input) {
-//
-//        log.info("Attempting to book room: roomId{}, input{}",
-//                roomId, input);
-//
-//        try {
-//
-//                    input.setRoomId(String.valueOf(roomId));
-//
-//            log.debug("Room ID: {}", input.getRoomId());
-//
-//            Either<Errors, BookRoomOutput> result = bookRoomOperationProcessor.process(input);
-//
-//            if (result.isRight()) {
-//                log.info("Booking successful for roomId={}", roomId);
-//                return ResponseEntity.ok(result.get());
-//            } else {
-//                Errors errors = result.getLeft();
-//                log.warn("Booking failed: {}", errors.getMessage());
-//                return ResponseEntity.badRequest().body(errors);
-//            }
-//        } catch (Exception e) {
-//            log.error("An unexpected error occurred while booking the room.", e);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorOutput(List.of(new Errors("Unexpected error")), HttpStatus.INTERNAL_SERVER_ERROR));
-//        }
-//    }
+    @PostMapping(RestApiRoutes.BOOK_ROOM)
+    public ResponseEntity<?> bookRoom(
+            @RequestParam String roomId,
+            @RequestParam String userId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String phoneNo) {
 
+        log.info("Attempting to book room: roomId={}, userId={}, startDate={}, endDate={}, firstName={}, lastName={}, phoneNo={}",
+                roomId, userId, startDate, endDate, firstName, lastName, phoneNo);
 
+        try {
+            BookRoomInput bookRoomInput = BookRoomInput.builder()
+                    .roomId(UUID.fromString(roomId))
+                    .userId(UUID.fromString(userId))
+                    .startDate(startDate)
+                    .endDate(endDate)
+                    .firstName(firstName)
+                    .lastName(lastName)
+                    .phoneNo(phoneNo)
+                    .build();
 
     @PostMapping(RestApiRoutes.ADD_ROOM)
     @Operation(summary = "Add a room")
@@ -259,7 +253,6 @@ public class HotelController extends BaseOperation {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors.getMessage());
         }
     }
-
 
     @DeleteMapping(RestApiRoutes.DELETE_ROOM)
     @Operation(summary = "Deletes room by Id.")
