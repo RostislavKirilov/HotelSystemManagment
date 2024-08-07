@@ -1,10 +1,9 @@
 package com.tinqinacademy.hotel.api.operations.bookroom;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tinqinacademy.hotel.api.base.OperationInput;
 import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -17,8 +16,9 @@ import java.util.UUID;
 @NoArgsConstructor
 public class BookRoomInput implements OperationInput {
 
+    @JsonIgnore
     @NotNull(message = "Room id must not be blank.")
-    private UUID roomId;
+    private String roomId;
 
     @NotNull(message = "Starting date must not be blank.")
     @FutureOrPresent
@@ -33,5 +33,5 @@ public class BookRoomInput implements OperationInput {
     private String phoneNo;
 
     @NotNull(message = "User ID must not be blank.")
-    private UUID userId;
+    private String userId;
 }

@@ -1,6 +1,6 @@
 package com.tinqinacademy.hotel.core.converters;
 
-import com.tinqinacademy.hotel.api.operations.RoomId;
+import com.tinqinacademy.hotel.api.operations.findroom.RoomId;
 import com.tinqinacademy.hotel.persistence.entitites.Room;
 import org.springframework.stereotype.Component;
 import org.springframework.core.convert.converter.Converter;
@@ -14,7 +14,7 @@ public class RoomToRoomIdConverter implements Converter<Room, RoomId> {
     public RoomId convert ( Room room ) {
 
         return RoomId.builder()
-                .Id(room.getId().toString())
+                .roomId(room.getId().toString())
                 .price(room.getPrice())
                 .floor(String.valueOf(room.getRoomFloor()))
                 .bathroomType(room.getBathroomType().name())

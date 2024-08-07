@@ -3,8 +3,6 @@ package com.tinqinacademy.hotel.api.operations.partialupdate;
 import com.tinqinacademy.hotel.api.base.OperationOutput;
 import lombok.*;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 @Builder

@@ -5,7 +5,8 @@ import com.tinqinacademy.hotel.api.contracts.RestApiRoutes;
 import com.tinqinacademy.hotel.api.errors.ErrorMapper;
 import com.tinqinacademy.hotel.api.errors.ErrorOutput;
 import com.tinqinacademy.hotel.api.errors.Errors;
-import com.tinqinacademy.hotel.api.operations.RoomId;
+import com.tinqinacademy.hotel.api.operations.findroom.FindRoomInput;
+import com.tinqinacademy.hotel.api.operations.findroom.RoomId;
 import com.tinqinacademy.hotel.api.operations.VisitorRegistration.VisitorRegistrationInput;
 import com.tinqinacademy.hotel.api.operations.VisitorRegistration.VisitorRegistrationOutput;
 import com.tinqinacademy.hotel.api.operations.bookroom.BookRoomInput;
@@ -19,7 +20,7 @@ import com.tinqinacademy.hotel.api.operations.removebooking.RemoveBookingOperati
 import com.tinqinacademy.hotel.api.operations.removebooking.RemoveBookingOutput;
 import com.tinqinacademy.hotel.core.converters.RoomToRoomIdConverter;
 import com.tinqinacademy.hotel.core.operations.*;
-import com.tinqinacademy.hotel.persistence.entitites.*;
+import com.tinqinacademy.hotel.persistence.entitites.Room;
 import com.tinqinacademy.hotel.persistence.repository.RoomRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,17 +30,14 @@ import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(RestApiRoutes.API_HOTEL)
@@ -54,16 +52,17 @@ public class HotelController extends BaseOperation {
     private final DeleteRoomOperationProcessor deleteRoomOperationProcessor;
     private final RemoveBookingOperation removeBookingOperation;
     private final AvailableRoomsOperationProcessor availableRoomsOperationProcessor;
+    private final FindRoomOperationProcessor findRoomOperationProcessor;
     private final VisitorRegistrationOperationProcessor visitorRegistrationOperationProcessor;
 
-    public HotelController (Validator validator, ConversionService conversionService, ErrorMapper errorMapper,
-                            RoomRepository roomRepository, RoomToRoomIdConverter roomToRoomIdConverter,
-                            BookRoomOperationProcessor bookRoomOperationProcessor,
-                            CreateRoomOperationProcessor createRoomOperationProcessor,
-                            DeleteRoomOperationProcessor deleteRoomOperationProcessor,
-                            RemoveBookingOperation removeBookingOperation,
-                            AvailableRoomsOperationProcessor availableRoomsOperationProcessor,
-                            VisitorRegistrationOperationProcessor visitorRegistrationOperationProcessor) {
+    public HotelController ( Validator validator, ConversionService conversionService, ErrorMapper errorMapper,
+                             RoomRepository roomRepository, RoomToRoomIdConverter roomToRoomIdConverter,
+                             BookRoomOperationProcessor bookRoomOperationProcessor,
+                             CreateRoomOperationProcessor createRoomOperationProcessor,
+                             DeleteRoomOperationProcessor deleteRoomOperationProcessor,
+                             RemoveBookingOperation removeBookingOperation,
+                             AvailableRoomsOperationProcessor availableRoomsOperationProcessor,
+                             FindRoomOperationProcessor findRoomOperationProcessor, VisitorRegistrationOperationProcessor visitorRegistrationOperationProcessor) {
         super(validator, conversionService, errorMapper);
         this.roomRepository = roomRepository;
         this.roomToRoomIdConverter = roomToRoomIdConverter;
@@ -72,8 +71,10 @@ public class HotelController extends BaseOperation {
         this.deleteRoomOperationProcessor = deleteRoomOperationProcessor;
         this.removeBookingOperation = removeBookingOperation;
         this.availableRoomsOperationProcessor = availableRoomsOperationProcessor;
+        this.findRoomOperationProcessor = findRoomOperationProcessor;
         this.visitorRegistrationOperationProcessor = visitorRegistrationOperationProcessor;
     }
+}
 
     @PostMapping(RestApiRoutes.BOOK_ROOM)
     public ResponseEntity<?> bookRoom(
@@ -99,24 +100,6 @@ public class HotelController extends BaseOperation {
                     .phoneNo(phoneNo)
                     .build();
 
-            log.debug("Room ID: {}, User ID: {}", bookRoomInput.getRoomId(), bookRoomInput.getUserId());
-
-            Either<Errors, BookRoomOutput> result = bookRoomOperationProcessor.process(bookRoomInput);
-
-            if (result.isRight()) {
-                log.info("Booking successful for roomId={}", roomId);
-                return ResponseEntity.ok(result.get());
-            } else {
-                Errors errors = result.getLeft();
-                log.warn("Booking failed: {}", errors.getMessage());
-                return ResponseEntity.badRequest().body(errors);
-            }
-        } catch (Exception e) {
-            log.error("An unexpected error occurred while booking the room.", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorOutput(List.of(new Errors("Unexpected error")), HttpStatus.INTERNAL_SERVER_ERROR));
-        }
-    }
-
     @PostMapping(RestApiRoutes.ADD_ROOM)
     @Operation(summary = "Add a room")
     @ApiResponses(value = {
@@ -133,6 +116,44 @@ public class HotelController extends BaseOperation {
         } else {
             Errors errors = result.getLeft();
             return ResponseEntity.badRequest().body(errors);
+        }
+    }
+
+    @PostMapping(RestApiRoutes.BOOK_ROOM)
+    @Operation(summary = "Book a room")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Room booked successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid data"),
+            @ApiResponse(responseCode = "404", description = "Room or user not found"),
+            @ApiResponse(responseCode = "409", description = "Room already reserved"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<?> bookRoom(
+            @RequestParam UUID roomId,
+            @RequestBody BookRoomInput input) {
+
+        log.info("Attempting to book room: roomId={}, input={}",
+                roomId, input);
+
+        try {
+            input.setRoomId(String.valueOf(roomId));
+
+            log.debug("Room ID: {}", input.getRoomId());
+
+            Either<Errors, BookRoomOutput> result = bookRoomOperationProcessor.process(input);
+
+            if (result.isRight()) {
+                log.info("Booking successful for roomId={}", roomId);
+                return ResponseEntity.ok(result.get());
+            } else {
+                Errors errors = result.getLeft();
+                log.warn("Booking failed: {}", errors.getMessage());
+                return ResponseEntity.badRequest().body(errors);
+            }
+        } catch (Exception e) {
+            log.error("An unexpected error occurred while booking the room.", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorOutput(List.of(new Errors("Unexpected error")), HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -220,21 +241,17 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "400", description = "Invalid data"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<RoomId> getRoomById (@PathVariable UUID roomId) {
-        Room room = roomRepository.findById(roomId).orElse(null);
-        if (room == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    public ResponseEntity<?> getRoomById(@PathVariable UUID roomId) {
+        FindRoomInput input = FindRoomInput.builder().roomId(roomId.toString()).build();
+        Either<Errors, RoomId> result = findRoomOperationProcessor.process(input);
+
+        if (result.isRight()) {
+            RoomId roomIdDto = result.get();
+            return ResponseEntity.ok(roomIdDto);
+        } else {
+            Errors errors = result.getLeft();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors.getMessage());
         }
-        RoomId roomIdDto = roomToRoomIdConverter.convert(room);
-
-        List<LocalDateTime> datesOccupied = room.getBookings().stream()
-                .flatMap(booking -> booking.getStartDate().datesUntil(booking.getEndDate().plusDays(1))
-                        .map(LocalDate::atStartOfDay))
-                .collect(Collectors.toList());
-
-        assert roomIdDto != null;
-        roomIdDto.setDatesOccupied(datesOccupied);
-        return ResponseEntity.ok(roomIdDto);
     }
 
     @DeleteMapping(RestApiRoutes.DELETE_ROOM)
@@ -244,14 +261,14 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "404", description = "Room not found"),
             @ApiResponse(responseCode = "400", description = "Invalid data"),
     })
-    public ResponseEntity<String> deleteRoom (@PathVariable String id) {
+    public ResponseEntity<?> deleteRoom (@PathVariable String id) {
         log.info("Attempting to delete room with ID: {}", id);
 
         Either<Errors, DeleteRoomOutput> result = deleteRoomOperationProcessor.process(new DeleteRoomInput(id));
 
         if (result.isRight()) {
             log.info("Room with ID {} successfully removed", id);
-            return ResponseEntity.ok("Room is removed!");
+            return ResponseEntity.ok(result.get());
         } else {
             Errors errors = result.getLeft();
             log.warn("Failed to delete room: {}", errors.getMessage());

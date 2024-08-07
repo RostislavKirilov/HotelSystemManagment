@@ -1,6 +1,6 @@
 package com.tinqinacademy.hotel.api.customannotations;
 
-import com.tinqinacademy.hotel.persistence.models.Bed;
+import com.tinqinacademy.hotel.api.models.Bed;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
