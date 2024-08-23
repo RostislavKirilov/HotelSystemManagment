@@ -76,6 +76,6 @@ public class CreateUserOperationProcessor extends BaseOperation implements Creat
         Error error = Error.builder()
                 .message(message)
                 .build();
-        return new Errors(List.of(error).toString());
+        return new Errors(List.of(error));
     }
 }

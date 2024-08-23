@@ -17,7 +17,7 @@ import java.util.UUID;
 public class BookRoomInput implements OperationInput {
 
     @JsonIgnore
-    @NotNull(message = "Room id must not be blank.")
+    //@NotNull(message = "Room id must not be blank.")
     private String roomId;
 
     @NotNull(message = "Starting date must not be blank.")

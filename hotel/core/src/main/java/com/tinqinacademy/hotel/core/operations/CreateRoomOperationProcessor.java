@@ -43,7 +43,9 @@ public class CreateRoomOperationProcessor extends BaseOperation implements Creat
         return Try.of(() -> BathroomType.valueOf(bathroomType.toUpperCase()))
                 .toEither()
                 .map(Enum::name)
-                .mapLeft(Throwable::getMessage);
+                //.mapLeft(Throwable::getMessage);
+                .mapLeft(ex -> "Invalid value for bathroomType: " + bathroomType);
+
     }
 
     private Either<String, CreateRoomOutput> createRoom(CreateRoomInput input, String validBathroomType) {
@@ -64,6 +66,6 @@ public class CreateRoomOperationProcessor extends BaseOperation implements Creat
     private Errors createErrors(String message) {
         Error error = new Error();
         error.setMessage(message);
-        return new Errors(List.of(error).toString());
+        return new Errors(List.of(error));
     }
 }

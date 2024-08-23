@@ -22,22 +22,20 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @ToString
-@JsonIgnoreProperties(ignoreUnknown = true)
-
+//@JsonIgnoreProperties(ignoreUnknown = true)
 public class Room {
-
-    public static class BasicView {}
+//    public static class BasicView {}
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @JsonView(BasicView.class)
+    //@JsonView(BasicView.class)
     private UUID id;
 
     @Column(nullable = false)
     private Integer roomFloor;
 
     @Column(nullable = false)
-    @JsonView(BasicView.class)
+    //@JsonView(BasicView.class)
     private String roomNumber;
 
     @Column(nullable = false)
@@ -55,12 +53,13 @@ public class Room {
     private List<BedEntity> beds = new ArrayList<>();
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    //@JsonManagedReference
     private List<Booking> bookings = new ArrayList<>();
 
     private Bed bedSize;
 
-    @Column
-    private UUID guestId;
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GuestRoom> guestRooms = new ArrayList<>();
 }
+
 

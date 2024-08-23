@@ -8,6 +8,8 @@ import com.tinqinacademy.hotel.api.operations.partialupdate.PartialUpdateInput;
 import com.tinqinacademy.hotel.api.operations.partialupdate.PartialUpdateOperation;
 import com.tinqinacademy.hotel.api.operations.partialupdate.PartialUpdateOutput;
 import com.tinqinacademy.hotel.persistence.entitites.Room;
+import com.tinqinacademy.hotel.persistence.models.BathroomType;
+import com.tinqinacademy.hotel.persistence.models.Bed;
 import com.tinqinacademy.hotel.persistence.repository.RoomRepository;
 import io.vavr.API;
 import io.vavr.control.Either;
@@ -35,8 +37,6 @@ public class PartialUpdateOperationProcessor extends BaseOperation implements Pa
     @Override
     @Transactional
     public Either<Errors, PartialUpdateOutput> process(PartialUpdateInput input) {
-        // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
-        // и за следене на изпълнението на операцията.
         return Try.of(() -> {
                     log.info("Starting partial update operation for input: {}", input);
                     validate(input);
@@ -46,7 +46,25 @@ public class PartialUpdateOperationProcessor extends BaseOperation implements Pa
                     Room room = roomRepository.findById(roomId)
                             .orElseThrow(() -> new IllegalArgumentException(ExceptionMessages.ROOM_NOT_FOUND + " for ID: " + roomId));
 
-                    //room = input.toRoomEntity(room);
+                    // Update only the fields that are not null
+//                    if (input.getBed_size() != null) {
+//                        room.setBedSize(Bed.valueOf(input.getBed_size()));
+//                    }
+                    if (input.getBed_size() != null) {
+                        room.setBedSize(Bed.getByCode(input.getBed_size()));
+                    }
+                    if (input.getBathroomType() != null) {
+                        room.setBathroomType(BathroomType.valueOf(input.getBathroomType().toUpperCase()));
+                    }
+                    if (input.getFloor() != null) {
+                        room.setRoomFloor(input.getFloor());
+                    }
+                    if (input.getRoomNo() != null) {
+                        room.setRoomNumber(String.valueOf(input.getRoomNo()));
+                    }
+                    if (input.getPrice() != null) {
+                        room.setPrice(input.getPrice());
+                    }
 
                     Room updatedRoom = roomRepository.save(room);
 
@@ -58,14 +76,31 @@ public class PartialUpdateOperationProcessor extends BaseOperation implements Pa
                 .mapLeft(this::handleErrors);
     }
 
-    private Errors handleErrors(Throwable throwable) {
-        return API.Match(throwable).of(
-                API.Case(API.$(IllegalArgumentException.class::isInstance),
-                        Errors.of(ExceptionMessages.INVALID_DATA_INPUT)),
-                API.Case(API.$(RuntimeException.class::isInstance),
-                        Errors.of(ExceptionMessages.UNEXPECTED_ERROR)),
-                API.Case(API.$(),
-                        Errors.of(ExceptionMessages.UNEXPECTED_ERROR))
-        );
-    }
+//    private Errors handleErrors(Throwable throwable) {
+//        return API.Match(throwable).of(
+//                API.Case(API.$(IllegalArgumentException.class::isInstance),
+//                        Errors.of(ExceptionMessages.INVALID_DATA_INPUT)),
+//                API.Case(API.$(RuntimeException.class::isInstance),
+//                        Errors.of(ExceptionMessages.UNEXPECTED_ERROR)),
+//                API.Case(API.$(),
+//                        Errors.of(ExceptionMessages.UNEXPECTED_ERROR))
+//        );
+private Errors handleErrors(Throwable throwable) {
+    return API.Match(throwable).of(
+            API.Case(API.$(IllegalArgumentException.class::isInstance), () -> {
+                String message = throwable.getMessage();
+                if (message.contains(ExceptionMessages.ROOM_NOT_FOUND)) {
+                    return Errors.of(message);
+                } else {
+                    return Errors.of(ExceptionMessages.INVALID_DATA_INPUT);
+                }
+            }),
+            API.Case(API.$(RuntimeException.class::isInstance),
+                    Errors.of(ExceptionMessages.UNEXPECTED_ERROR)),
+            API.Case(API.$(),
+                    Errors.of(ExceptionMessages.UNEXPECTED_ERROR))
+    );
 }
+
+}
+

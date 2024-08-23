@@ -1,5 +1,6 @@
 package com.tinqinacademy.hotel.api.operations.updateroom;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tinqinacademy.hotel.api.base.OperationInput;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -21,8 +22,8 @@ public class UpdateRoomInput implements OperationInput {
     @NotNull
     private String bedSize;
 
-    @NotNull
-    private UUID roomId;
+    @JsonIgnore
+    private String roomId;
 
     @NotNull
     private String bathroomType;

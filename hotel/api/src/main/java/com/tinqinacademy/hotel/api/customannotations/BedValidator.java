@@ -13,7 +13,7 @@ public class BedValidator implements ConstraintValidator<ValidBed, String> {
     @Override
     public boolean isValid(String bedCode, ConstraintValidatorContext context) {
         if (bedCode == null) {
-            return false;
+            return true;
         }
         return Bed.getByCode(bedCode) != Bed.UNKNOWN;
     }

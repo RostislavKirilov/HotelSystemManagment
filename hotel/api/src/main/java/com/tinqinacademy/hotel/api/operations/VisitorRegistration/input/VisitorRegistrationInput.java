@@ -1,16 +1,23 @@
-package com.tinqinacademy.hotel.api.operations.VisitorRegistration;
+package com.tinqinacademy.hotel.api.operations.visitorregistration.input;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tinqinacademy.hotel.api.base.OperationInput;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.*;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@Builder
 public class VisitorRegistrationInput implements OperationInput {
 
-    @NotNull(message = "Room ID cannot be null")
-    private UUID roomId;
+    private String roomId;
 
     @NotNull(message = "Start date cannot be null")
     private LocalDate startDate;

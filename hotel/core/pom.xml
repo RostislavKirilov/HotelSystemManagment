@@ -21,6 +21,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+
+        <dependency>
             <groupId>${parent.groupId}</groupId>
             <artifactId>persistence</artifactId>
             <version>${revision}</version>

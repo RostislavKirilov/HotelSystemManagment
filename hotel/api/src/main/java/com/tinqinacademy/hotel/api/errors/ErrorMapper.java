@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -16,7 +17,7 @@ public class ErrorMapper {
 
     public <T extends Throwable> ErrorOutput map(T throwable, HttpStatus httpStatus) {
         return ErrorOutput.builder()
-                .errors(List.of(Errors.builder()
+                .errors(List.of(Error.builder()
                         .message(throwable.getMessage())
                         .build()))
                 .status(httpStatus)
@@ -24,8 +25,12 @@ public class ErrorMapper {
     }
 
     public ErrorOutput mapErrors(List<Errors> errors, HttpStatus httpStatus) {
+        List<Error> errorList = errors.stream()
+                .flatMap(e -> e.getErrors().stream())
+                .collect(Collectors.toList());
+
         return ErrorOutput.builder()
-                .errors(errors)
+                .errors(errorList)
                 .status(httpStatus)
                 .build();
     }
