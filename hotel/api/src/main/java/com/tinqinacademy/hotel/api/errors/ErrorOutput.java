@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 @Builder
 @ToString
 public class ErrorOutput {
-    private List<Errors> errors;
+    private List<Error> errors;
     private HttpStatus status;
 
     public String getMessage() {
@@ -21,7 +22,7 @@ public class ErrorOutput {
             return "Unknown error";
         }
         return errors.stream()
-                .map(Errors::getMessage)
+                .map(Error::getMessage)
                 .collect(Collectors.joining(", "));
     }
 }

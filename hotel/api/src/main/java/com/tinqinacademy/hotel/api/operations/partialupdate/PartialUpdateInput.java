@@ -1,5 +1,6 @@
 package com.tinqinacademy.hotel.api.operations.partialupdate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tinqinacademy.hotel.api.base.OperationInput;
 import com.tinqinacademy.hotel.api.customannotations.ValidBed;
 import jakarta.validation.constraints.NotNull;
@@ -15,21 +16,17 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class PartialUpdateInput implements OperationInput {
 
-    @NotNull
+    @JsonIgnore
     private String roomId;
 
     @ValidBed
     private String bed_size;
 
-    @NotNull
     private String bathroomType;
 
-    @NotNull
     private Integer floor;
 
-    @NotNull
     private Integer roomNo;
 
-    @NotNull
     private BigDecimal price;
 }

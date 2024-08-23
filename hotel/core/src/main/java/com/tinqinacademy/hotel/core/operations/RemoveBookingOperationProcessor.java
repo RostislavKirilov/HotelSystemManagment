@@ -66,6 +66,6 @@ public class RemoveBookingOperationProcessor extends BaseOperation implements Re
         Error error = Error.builder()
                 .message(message)
                 .build();
-        return new Errors(List.of(error).toString());
+        return new Errors(List.of(error));
     }
 }

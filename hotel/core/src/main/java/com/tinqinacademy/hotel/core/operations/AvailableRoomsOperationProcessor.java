@@ -15,6 +15,7 @@ import io.vavr.control.Try;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -66,11 +67,19 @@ public class AvailableRoomsOperationProcessor extends BaseOperation implements A
 
     // Преобразува грешката в ErrorOutput, грешките се форматират, за да се върнат
     //в подходят вид на клиента
-    private Errors handleErrors ( Throwable throwable ) {
+    private Errors handleErrors(Throwable throwable) {
         ErrorOutput errorOutput = matchError(throwable);
-        return new Errors(List.of(Error.builder()
-                .message(errorOutput.getMessage())
-                .build()).toString());
+        if (errorOutput == null) {
+            // Ако `matchError` върне `null`, създаваме дефолтна стойност
+            errorOutput = ErrorOutput.builder()
+                    .errors(List.of(new Error("Unknown error occurred")))
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .build();
+        }
+        return new Errors(List.of(
+                Error.builder()
+                        .message(errorOutput.getMessage())
+                        .build()));
     }
 
     private ErrorOutput matchError(Throwable throwable) {

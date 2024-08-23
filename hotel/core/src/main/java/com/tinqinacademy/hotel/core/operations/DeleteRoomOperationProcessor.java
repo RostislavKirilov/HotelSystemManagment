@@ -64,6 +64,6 @@ public class DeleteRoomOperationProcessor extends BaseOperation implements Delet
         Error error = Error.builder()
                 .message(message)
                 .build();
-        return new Errors(List.of(error).toString());
+        return new Errors(List.of(error));
     }
 }

@@ -23,11 +23,13 @@ import io.vavr.control.Try;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -47,7 +49,7 @@ public class BookRoomOperationProcessor extends BaseOperation implements BookRoo
 
     @Override
     @Transactional
-    public Either<Errors, BookRoomOutput> process(BookRoomInput input) {
+    public Either<Errors, BookRoomOutput> process ( BookRoomInput input ) {
         // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
         // и за следене на изпълнението на операцията.
         return Try.of(() -> {
@@ -88,7 +90,8 @@ public class BookRoomOperationProcessor extends BaseOperation implements BookRoo
                 .toEither()
                 .mapLeft(this::handleErrors);
     }
-    private boolean isRoomAvailable(UUID roomId, LocalDate startDate, LocalDate endDate) {
+
+    private boolean isRoomAvailable ( UUID roomId, LocalDate startDate, LocalDate endDate ) {
         List<Booking> existingBookings = bookingRepository.findConflictingBookings(roomId, startDate, endDate);
         return existingBookings.isEmpty();
     }
@@ -96,18 +99,22 @@ public class BookRoomOperationProcessor extends BaseOperation implements BookRoo
     private Errors handleErrors(Throwable throwable) {
         ErrorOutput errorOutput = API.Match(throwable)
                 .of(
+                        API.Case(API.$(RoomAlreadyReserved.class::isInstance),
+                                () -> new ErrorOutput(
+                                        List.of(new Error(ExceptionMessages.ROOM_ALREADY_BOOKED)),
+                                        HttpStatus.CONFLICT)),
                         caseRoomNotFound(throwable),
                         caseBedNotFound(throwable),
                         caseBookingNotFound(throwable),
                         caseUserNotFound(throwable),
                         caseInvalidInput(throwable),
-                        caseRoomAlreadyReserved(throwable),
                         defaultCase(throwable)
-
                 );
 
-        return new Errors(List.of(Error.builder()
-                .message(errorOutput.getMessage())
-                .build()).toString());
+        return new Errors(Optional.ofNullable(errorOutput)
+                .map(ErrorOutput::getErrors)
+                .orElse(List.of(new Error("Unknown error"))));
     }
+
+
 }

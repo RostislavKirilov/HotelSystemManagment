@@ -1,6 +1,7 @@
 package com.tinqinacademy.hotel.core.operations;
 
 import com.tinqinacademy.hotel.api.base.BaseOperation;
+import com.tinqinacademy.hotel.api.errors.Error;
 import com.tinqinacademy.hotel.api.errors.ErrorMapper;
 import com.tinqinacademy.hotel.api.errors.Errors;
 import com.tinqinacademy.hotel.api.operations.findroom.FindRoomInput;
@@ -14,6 +15,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,7 +34,10 @@ public class FindRoomOperationProcessor extends BaseOperation implements FindRoo
         Room room = roomRepository.findById(UUID.fromString(input.getRoomId())).orElse(null);
 
         if (room == null) {
-            return Either.left(new Errors("Room not found"));
+            Error error = Error.builder()
+                    .message("Room not found")
+                    .build();
+            return Either.left(new Errors(List.of(error)));
         }
 
         RoomId roomIdDto = RoomId.builder()

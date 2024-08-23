@@ -12,27 +12,19 @@ import java.util.stream.Collectors;
 @Builder
 @ToString
 public class Errors {
-
     private List<Error> errors;
-
     private String message;
     private String field;
 
-    public Errors ( String unexpectedError ) {
-        this.message = unexpectedError;
-        this.errors = List.of();
-    }
-
-    public String getMessage() {
-        if (errors == null || errors.isEmpty()) {
-            return "";
-        }
-        return errors.stream()
+    public Errors(List<Error> errors) {
+        this.errors = errors;
+        this.message = errors.stream()
                 .map(Error::getMessage)
                 .collect(Collectors.joining(", "));
     }
 
+    // Добавяне на статичен метод за създаване на Errors от съобщение
     public static Errors of(String message) {
-        return new Errors(message);
+        return new Errors(List.of(Error.builder().message(message).build()));
     }
 }

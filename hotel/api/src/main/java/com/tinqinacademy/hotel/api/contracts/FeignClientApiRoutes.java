@@ -10,4 +10,9 @@ public class FeignClientApiRoutes {
     public static final String REMOVE_BOOKING = "DELETE " + RestApiRoutes.REMOVE_BOOKING;
     public static final String DELETE_ROOM = "DELETE " + RestApiRoutes.DELETE_ROOM;
     public static final String FIND_ROOM = "GET " + RestApiRoutes.FIND_ROOM;
+
+    public static final String UPDATE_ROOM = "PUT " + RestApiRoutes.UPDATE_ROOM;
+
+    public static final String PARTIAL_UPDATE_ROOM = "PATCH " + RestApiRoutes.UPDATE_ROOM;
+
 }

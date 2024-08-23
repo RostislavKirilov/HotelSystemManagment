@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -46,9 +48,9 @@ public class Guest {
     @NotNull
     private LocalDate idCardIssueDate;
 
-    @ManyToOne
-    @JoinColumn(name = "room_id", nullable = false)
-    private Room room;
+
+    @OneToMany(mappedBy = "guest", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GuestRoom> guestRooms = new ArrayList<>();
 
     @OneToOne(mappedBy = "guest")
     private Booking booking;
