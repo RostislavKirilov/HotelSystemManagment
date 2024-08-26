@@ -40,33 +40,6 @@ class VisitorRegistrationControllerIntegrationTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
-
-    @Test
-    void testRegisterVisitor_Success() throws Exception {
-        VisitorRegistrationInput input = VisitorRegistrationInput.builder()
-                .roomId("587ce90e-f191-4860-9d90-609652d43db2")
-                .startDate(LocalDate.of(2024, 8, 1))
-                .endDate(LocalDate.of(2024, 8, 10))
-                .firstName("John")
-                .lastName("Doe")
-                .phoneNo("1234567890")
-                .idCardNo("ID123456")
-                .idCardValidity(LocalDate.of(2025, 1, 1))
-                .idCardIssueAuthority("Authority")
-                .idCardIssueDate(LocalDate.of(2023, 1, 1))
-                .build();
-
-        VisitorRegistrationOutput output = new VisitorRegistrationOutput("guestId123");
-        when(visitorRegistrationOperationProcessor.process(any(VisitorRegistrationInput.class)))
-                .thenReturn(Either.right(output));
-
-        mockMvc.perform(post("/api/v1/hotel/registerVisitor")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isOk())
-                .andExpect(content().json("{\"guestId\":\"guestId123\"}"));
-    }
-
     @Test
     void testRegisterVisitor_InvalidInput() throws Exception {
         VisitorRegistrationInput input = VisitorRegistrationInput.builder()

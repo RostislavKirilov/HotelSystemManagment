@@ -9,7 +9,10 @@ import com.tinqinacademy.hotel.api.operations.removebooking.RemoveBookingInput;
 import com.tinqinacademy.hotel.api.operations.removebooking.RemoveBookingOperation;
 import com.tinqinacademy.hotel.api.operations.removebooking.RemoveBookingOutput;
 import com.tinqinacademy.hotel.persistence.entitites.Booking;
+import com.tinqinacademy.hotel.persistence.entitites.Room;
+import com.tinqinacademy.hotel.persistence.models.RoomStatus;
 import com.tinqinacademy.hotel.persistence.repository.BookingRepository;
+import com.tinqinacademy.hotel.persistence.repository.RoomRepository;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 import jakarta.validation.Validator;
@@ -26,17 +29,19 @@ import java.util.UUID;
 public class RemoveBookingOperationProcessor extends BaseOperation implements RemoveBookingOperation {
 
     private final BookingRepository bookingRepository;
+    private final RoomRepository roomRepository;
 
-    public RemoveBookingOperationProcessor ( Validator validator, ConversionService conversionService, ErrorMapper errorMapper, BookingRepository bookingRepository ) {
+    public RemoveBookingOperationProcessor(Validator validator, ConversionService conversionService, ErrorMapper errorMapper,
+                                           BookingRepository bookingRepository, RoomRepository roomRepository) {
         super(validator, conversionService, errorMapper);
         this.bookingRepository = bookingRepository;
+        this.roomRepository = roomRepository;
     }
 
     @Override
     @Transactional
     public Either<Errors, RemoveBookingOutput> process(RemoveBookingInput input) {
-        // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
-        // и за следене на изпълнението на операцията.
+        // Логваме началото на операцията
         return Try.of(() -> {
                     log.info("Start removing booking input: {}", input);
                     validateInput(input);
@@ -45,6 +50,14 @@ public class RemoveBookingOperationProcessor extends BaseOperation implements Re
                     Booking booking = bookingRepository.findById(bookingId)
                             .orElseThrow(() -> new RuntimeException(ExceptionMessages.BOOKING_NOT_FOUND + " for ID: " + bookingId));
 
+                    // Извличаме стаята от резервацията
+                    Room room = booking.getRoom();
+
+                    // Актуализираме статуса на стаята на "свободна"
+                    room.setStatus(RoomStatus.AVAILABLE);
+                    roomRepository.save(room);
+
+                    // Изтриваме резервацията
                     bookingRepository.deleteById(bookingId);
 
                     RemoveBookingOutput output = new RemoveBookingOutput();
@@ -69,3 +82,4 @@ public class RemoveBookingOperationProcessor extends BaseOperation implements Re
         return new Errors(List.of(error));
     }
 }
+

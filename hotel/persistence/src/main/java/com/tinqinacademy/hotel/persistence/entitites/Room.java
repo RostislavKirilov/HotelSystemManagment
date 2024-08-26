@@ -1,8 +1,5 @@
 package com.tinqinacademy.hotel.persistence.entitites;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonView;
 import com.tinqinacademy.hotel.persistence.models.BathroomType;
 import com.tinqinacademy.hotel.persistence.models.Bed;
 import com.tinqinacademy.hotel.persistence.models.RoomStatus;
@@ -22,9 +19,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @ToString
-//@JsonIgnoreProperties(ignoreUnknown = true)
 public class Room {
-//    public static class BasicView {}
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

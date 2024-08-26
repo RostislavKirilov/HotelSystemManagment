@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tinqinacademy.hotel.api.base.OperationInput;
 import com.tinqinacademy.hotel.api.customannotations.ValidBed;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -28,5 +29,6 @@ public class PartialUpdateInput implements OperationInput {
 
     private Integer roomNo;
 
+    @Positive
     private BigDecimal price;
 }

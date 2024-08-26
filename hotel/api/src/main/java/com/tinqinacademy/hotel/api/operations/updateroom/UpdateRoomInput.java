@@ -29,9 +29,11 @@ public class UpdateRoomInput implements OperationInput {
     private String bathroomType;
 
     @NotNull
+    @Positive
     private Integer room_floor;
 
     @NotNull
+    @Positive
     private String room_number;
 
     @NotNull

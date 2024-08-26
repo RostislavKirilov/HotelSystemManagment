@@ -36,7 +36,7 @@ public class PartialUpdateOperationProcessor extends BaseOperation implements Pa
 
     @Override
     @Transactional
-    public Either<Errors, PartialUpdateOutput> process(PartialUpdateInput input) {
+    public Either<Errors, PartialUpdateOutput> process ( PartialUpdateInput input ) {
         return Try.of(() -> {
                     log.info("Starting partial update operation for input: {}", input);
                     validate(input);
@@ -46,10 +46,6 @@ public class PartialUpdateOperationProcessor extends BaseOperation implements Pa
                     Room room = roomRepository.findById(roomId)
                             .orElseThrow(() -> new IllegalArgumentException(ExceptionMessages.ROOM_NOT_FOUND + " for ID: " + roomId));
 
-                    // Update only the fields that are not null
-//                    if (input.getBed_size() != null) {
-//                        room.setBedSize(Bed.valueOf(input.getBed_size()));
-//                    }
                     if (input.getBed_size() != null) {
                         room.setBedSize(Bed.getByCode(input.getBed_size()));
                     }
@@ -76,31 +72,22 @@ public class PartialUpdateOperationProcessor extends BaseOperation implements Pa
                 .mapLeft(this::handleErrors);
     }
 
-//    private Errors handleErrors(Throwable throwable) {
-//        return API.Match(throwable).of(
-//                API.Case(API.$(IllegalArgumentException.class::isInstance),
-//                        Errors.of(ExceptionMessages.INVALID_DATA_INPUT)),
-//                API.Case(API.$(RuntimeException.class::isInstance),
-//                        Errors.of(ExceptionMessages.UNEXPECTED_ERROR)),
-//                API.Case(API.$(),
-//                        Errors.of(ExceptionMessages.UNEXPECTED_ERROR))
-//        );
-private Errors handleErrors(Throwable throwable) {
-    return API.Match(throwable).of(
-            API.Case(API.$(IllegalArgumentException.class::isInstance), () -> {
-                String message = throwable.getMessage();
-                if (message.contains(ExceptionMessages.ROOM_NOT_FOUND)) {
-                    return Errors.of(message);
-                } else {
-                    return Errors.of(ExceptionMessages.INVALID_DATA_INPUT);
-                }
-            }),
-            API.Case(API.$(RuntimeException.class::isInstance),
-                    Errors.of(ExceptionMessages.UNEXPECTED_ERROR)),
-            API.Case(API.$(),
-                    Errors.of(ExceptionMessages.UNEXPECTED_ERROR))
-    );
-}
+    private Errors handleErrors(Throwable throwable) {
+        return API.Match(throwable).of(
+                API.Case(API.$(IllegalArgumentException.class::isInstance), () -> {
+                    String message = throwable.getMessage();
+                    if (message.contains(ExceptionMessages.ROOM_NOT_FOUND)) {
+                        return Errors.of(message);
+                    } else {
+                        return Errors.of(ExceptionMessages.INVALID_DATA_INPUT);
+                    }
+                }),
+                API.Case(API.$(RuntimeException.class::isInstance),
+                        Errors.of(ExceptionMessages.UNEXPECTED_ERROR)),
+                API.Case(API.$(),
+                        Errors.of(ExceptionMessages.UNEXPECTED_ERROR))
+        );
+    }
 
 }
 

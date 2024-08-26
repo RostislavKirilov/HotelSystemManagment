@@ -11,5 +11,6 @@ import lombok.*;
 @ToString
 public class PartialUpdateOutput implements OperationOutput {
 
-    String roomId;
+    private String roomId;
+    private String message;
 }
