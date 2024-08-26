@@ -2,6 +2,7 @@ package com.tinqinacademy.hotel.rest.controllers;
 
 import com.tinqinacademy.hotel.api.contracts.RestApiRoutes;
 import com.tinqinacademy.hotel.api.errors.Errors;
+import com.tinqinacademy.hotel.api.messages.ExceptionMessages;
 import com.tinqinacademy.hotel.api.operations.partialupdate.PartialUpdateOutput;
 import com.tinqinacademy.hotel.api.operations.updateroom.UpdateRoomInput;
 import com.tinqinacademy.hotel.api.operations.updateroom.UpdateRoomOutput;
@@ -24,6 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
@@ -51,7 +55,6 @@ public class AdminController {
     public ResponseEntity<?> registerVisitor(@RequestBody VisitorRegistrationInput input) {
         log.info("Received registration request for room ID: {}", input.getRoomId());
 
-
         Either<Errors, VisitorRegistrationOutput> result = visitorRegistrationOperationProcessor.process(input);
 
         if (result.isRight()) {
@@ -59,7 +62,8 @@ public class AdminController {
             return ResponseEntity.ok(visitorRegistrationOutput);
         } else {
             Errors errors = result.getLeft();
-            log.error("Partial update failed: {}", errors.getMessage());
+            log.error("Registration failed: {}", errors.getMessage());
+            // Можете да адаптирате тук грешките, ако е нужно
             return ResponseEntity.badRequest().body(errors);
         }
     }
@@ -78,14 +82,24 @@ public class AdminController {
         Either<Errors, UpdateRoomOutput> result = updateRoomOperationProcessor.process(input);
 
         if (result.isRight()) {
-            UpdateRoomOutput updateRoomOutput = result.get();
-            return ResponseEntity.ok(updateRoomOutput);
+            return ResponseEntity.ok("Room information successfully updated");
         } else {
             Errors errors = result.getLeft();
             log.error("Update failed: {}", errors.getMessage());
-            return ResponseEntity.badRequest().body(errors);
+
+            if (errors.getErrors().stream().anyMatch(e -> e.getMessage().contains("ROOM_NOT_FOUND"))) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Room not found"));
+            }
+
+            // Връщаме JSON обект с грешки
+            return ResponseEntity.badRequest().body(Map.of("errors", errors.getErrors().stream()
+                    .map(error -> Map.of("message", error.getMessage()))
+                    .collect(Collectors.toList())));
         }
     }
+
+
+
     @PatchMapping(RestApiRoutes.UPDATE_ROOM)
     @Operation(summary = "Partially update room information")
     @ApiResponses(value = {
@@ -102,12 +116,17 @@ public class AdminController {
 
         if (result.isRight()) {
             PartialUpdateOutput partialUpdateOutput = result.get();
+            partialUpdateOutput.setMessage("Room successfully updated");
             return ResponseEntity.ok(partialUpdateOutput);
         } else {
             Errors errors = result.getLeft();
             log.error("Partial update failed: {}", errors.getMessage());
+
+            // Check if the error message indicates room not found and return 404 Not Found
+            if (errors.getErrors().stream().anyMatch(e -> e.getMessage().contains(ExceptionMessages.ROOM_NOT_FOUND))) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errors);
+            }
             return ResponseEntity.badRequest().body(errors);
         }
     }
-
 }

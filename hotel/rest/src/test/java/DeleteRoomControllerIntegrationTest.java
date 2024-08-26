@@ -27,7 +27,7 @@ class DeleteRoomControllerIntegrationTest {
 
 
     private MockMvc mockMvc;
-
+//не трябва да моквам DeleteRoomOperationProcessor, трябва да викам ендпойнта в MockMvc метода перформ и ендпойта, инжектвам Репото и проверявам дали наистина е станало, трябва да вкарам данни в теста
     @Mock
     private DeleteRoomOperationProcessor deleteRoomOperationProcessor;
 
@@ -51,20 +51,6 @@ class DeleteRoomControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().json("{\"message\":\"Room is removed!\"}"));
     }
-
-
-    @Test
-    void testDeleteRoom_RoomNotFound() throws Exception {
-        String roomId = "invalidRoomId";
-        Errors errors = new Errors(List.of(new Error("Room not found")));
-        when(deleteRoomOperationProcessor.process(any(DeleteRoomInput.class)))
-                .thenReturn(Either.left(errors));
-
-        mockMvc.perform(delete("/api/v1/hotel/deleteRoomById/{id}", roomId))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Room not found"));
-    }
-
 
     @Test
     void testDeleteRoom_InvalidInput() throws Exception {

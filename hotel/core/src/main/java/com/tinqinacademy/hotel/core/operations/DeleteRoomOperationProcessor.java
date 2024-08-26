@@ -5,6 +5,7 @@ import com.tinqinacademy.hotel.api.errors.ErrorMapper;
 import com.tinqinacademy.hotel.api.errors.Errors;
 import com.tinqinacademy.hotel.api.errors.Error;
 import com.tinqinacademy.hotel.api.messages.ExceptionMessages;
+import com.tinqinacademy.hotel.api.messages.RoomNotFoundException;
 import com.tinqinacademy.hotel.api.operations.deleteroom.DeleteRoomInput;
 import com.tinqinacademy.hotel.api.operations.deleteroom.DeleteRoomOperation;
 import com.tinqinacademy.hotel.api.operations.deleteroom.DeleteRoomOutput;
@@ -35,23 +36,21 @@ public class DeleteRoomOperationProcessor extends BaseOperation implements Delet
     @Override
     @Transactional
     public Either<Errors, DeleteRoomOutput> process(DeleteRoomInput input) {
-        // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
-        // и за следене на изпълнението на операцията.
         return Try.of(() -> {
                     validateInput(input);
 
                     UUID roomId = UUID.fromString(input.getRoomId());
                     Room room = roomRepository.findById(roomId)
-                            .orElseThrow(() -> new RuntimeException(ExceptionMessages.ROOM_NOT_FOUND + " for ID: " + roomId));
+                            .orElseThrow(() -> new RoomNotFoundException("Room not found!"));
 
                     roomRepository.deleteById(roomId);
 
-                    log.info("Room with ID {} successfully removed", roomId);
                     return new DeleteRoomOutput("Room is removed!");
                 })
                 .toEither()
                 .mapLeft(this::createErrors);
     }
+
 
     private void validateInput(DeleteRoomInput input) {
         if (input.getRoomId() == null) {

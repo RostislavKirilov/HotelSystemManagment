@@ -2,12 +2,15 @@ package com.tinqinacademy.hotel.api.messages;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
-@Setter
-@Getter
-public class RoomNotFoundException extends RuntimeException{
-
-    private final String message = ExceptionMessages.ROOM_NOT_FOUND;
+public class RoomNotFoundException extends RuntimeException {
+    public RoomNotFoundException(String message) {
+        super(message);
+    }
 
 
 }
+

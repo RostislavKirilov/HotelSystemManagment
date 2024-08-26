@@ -53,15 +53,16 @@ public class CreateRoomOperationProcessor extends BaseOperation implements Creat
                     Room room = Room.builder()
                             .roomFloor(input.getRoomFloor())
                             .roomNumber(input.getRoomNumber())
-                            .bathroomType(BathroomType.valueOf(validBathroomType))
+                            .bathroomType(BathroomType.valueOf(validBathroomType)) // Ensure correct conversion
                             .price(input.getPrice())
-                            .status(RoomStatus.AVAILABLE)
+                            .status(RoomStatus.AVAILABLE) // Make sure this is set if required
                             .build();
                     roomRepository.save(room);
                     return new CreateRoomOutput("Room added successfully!");
                 }).toEither()
                 .mapLeft(Throwable::getMessage);
     }
+
 
     private Errors createErrors(String message) {
         Error error = new Error();

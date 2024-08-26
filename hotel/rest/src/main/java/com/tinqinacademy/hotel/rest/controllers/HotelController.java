@@ -15,9 +15,7 @@ import com.tinqinacademy.hotel.api.operations.createroom.CreateRoomOutput;
 import com.tinqinacademy.hotel.api.operations.deleteroom.DeleteRoomInput;
 import com.tinqinacademy.hotel.api.operations.deleteroom.DeleteRoomOutput;
 import com.tinqinacademy.hotel.api.operations.removebooking.RemoveBookingInput;
-import com.tinqinacademy.hotel.api.operations.removebooking.RemoveBookingOperation;
 import com.tinqinacademy.hotel.api.operations.removebooking.RemoveBookingOutput;
-import com.tinqinacademy.hotel.core.converters.RoomToRoomIdConverter;
 import com.tinqinacademy.hotel.core.operations.*;
 import com.tinqinacademy.hotel.persistence.entitites.Room;
 import com.tinqinacademy.hotel.persistence.repository.RoomRepository;
@@ -45,30 +43,24 @@ public class HotelController extends BaseOperation {
 
     private static final Logger log = LoggerFactory.getLogger(HotelController.class);
     private final RoomRepository roomRepository;
-    private final RoomToRoomIdConverter roomToRoomIdConverter;
     private final BookRoomOperationProcessor bookRoomOperationProcessor;
     private final CreateRoomOperationProcessor createRoomOperationProcessor;
     private final DeleteRoomOperationProcessor deleteRoomOperationProcessor;
-    private final RemoveBookingOperation removeBookingOperation;
-    private final AvailableRoomsOperationProcessor availableRoomsOperationProcessor;
+    private final RemoveBookingOperationProcessor removeBookingOperationProcessor;
     private final FindRoomOperationProcessor findRoomOperationProcessor;
 
     public HotelController ( Validator validator, ConversionService conversionService, ErrorMapper errorMapper,
-                             RoomRepository roomRepository, RoomToRoomIdConverter roomToRoomIdConverter,
+                             RoomRepository roomRepository,
                              BookRoomOperationProcessor bookRoomOperationProcessor,
                              CreateRoomOperationProcessor createRoomOperationProcessor,
                              DeleteRoomOperationProcessor deleteRoomOperationProcessor,
-                             RemoveBookingOperation removeBookingOperation,
-                             AvailableRoomsOperationProcessor availableRoomsOperationProcessor,
-                             FindRoomOperationProcessor findRoomOperationProcessor) {
+                             RemoveBookingOperationProcessor removeBookingOperationProcessor, FindRoomOperationProcessor findRoomOperationProcessor ) {
         super(validator, conversionService, errorMapper);
         this.roomRepository = roomRepository;
-        this.roomToRoomIdConverter = roomToRoomIdConverter;
         this.bookRoomOperationProcessor = bookRoomOperationProcessor;
         this.createRoomOperationProcessor = createRoomOperationProcessor;
         this.deleteRoomOperationProcessor = deleteRoomOperationProcessor;
-        this.removeBookingOperation = removeBookingOperation;
-        this.availableRoomsOperationProcessor = availableRoomsOperationProcessor;
+        this.removeBookingOperationProcessor = removeBookingOperationProcessor;
         this.findRoomOperationProcessor = findRoomOperationProcessor;
     }
 
@@ -79,7 +71,7 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "400", description = "Invalid data!"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> addRoom(@RequestBody @Validated CreateRoomInput createRoomInput) {
+    public ResponseEntity<?> addRoom ( @RequestBody @Validated CreateRoomInput createRoomInput ) {
         try {
             Either<Errors, CreateRoomOutput> result = createRoomOperationProcessor.process(createRoomInput);
 
@@ -106,7 +98,7 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "409", description = "Room already reserved"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> bookRoom(@PathVariable String roomId, @RequestBody @Validated BookRoomInput input) {
+    public ResponseEntity<?> bookRoom ( @PathVariable String roomId, @RequestBody @Validated BookRoomInput input ) {
         log.info("Booking room with input: {}", input);
         input.setRoomId(roomId);
 
@@ -127,8 +119,6 @@ public class HotelController extends BaseOperation {
                     .body("An internal server error occurred: " + ex.getMessage());
         }
     }
-
-
     @DeleteMapping(RestApiRoutes.REMOVE_BOOKING)
     @Operation(summary = "Remove booking")
     @ApiResponses(value = {
@@ -137,23 +127,29 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "404", description = "Booking not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> removeBooking (@PathVariable String bookId) {
+    public ResponseEntity<?> removeBooking(@PathVariable String bookId) {
         RemoveBookingInput input = RemoveBookingInput.builder()
                 .bookingId(bookId)
                 .build();
 
-        Either<Errors, RemoveBookingOutput> result = removeBookingOperation.process(input);
+        Either<Errors, RemoveBookingOutput> result = removeBookingOperationProcessor.process(input);
 
         if (result.isRight()) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         } else {
             Errors errors = result.getLeft();
+            // Check if the error indicates "not found" and return 404
+            if (errors.getErrors().stream().anyMatch(error -> error.getMessage().contains("not found"))) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errors);
+            }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
         }
     }
 
+
+
     @GetMapping(RestApiRoutes.AVAILABLE_ROOMS)
-    public ResponseEntity<?> getAvailableRooms(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
+    public ResponseEntity<?> getAvailableRooms ( @RequestParam LocalDate startDate, @RequestParam LocalDate endDate ) {
         try {
             List<Room> availableRooms = roomRepository.findAvailableRooms(startDate, endDate);
             if (availableRooms.isEmpty()) {
@@ -180,18 +176,28 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "400", description = "Invalid data"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> getRoomById(@PathVariable UUID roomId) {
-        FindRoomInput input = FindRoomInput.builder().roomId(roomId.toString()).build();
-        Either<Errors, RoomId> result = findRoomOperationProcessor.process(input);
+    public ResponseEntity<?> getRoomById(@PathVariable String roomId) {
+        try {
+            UUID uuid = UUID.fromString(roomId); // Validate UUID format
+            FindRoomInput input = FindRoomInput.builder().roomId(uuid.toString()).build();
+            Either<Errors, RoomId> result = findRoomOperationProcessor.process(input);
 
-        if (result.isRight()) {
-            RoomId roomIdDto = result.get();
-            return ResponseEntity.ok(roomIdDto);
-        } else {
-            Errors errors = result.getLeft();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors.getMessage());
+            if (result.isRight()) {
+                RoomId roomIdDto = result.get();
+                return ResponseEntity.ok(roomIdDto);
+            } else {
+                Errors errors = result.getLeft();
+                if (errors.getMessage().contains("Room not found")) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errors.getMessage());
+                }
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors.getMessage());
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid room ID format");
         }
     }
+
+
 
 
     @DeleteMapping(RestApiRoutes.DELETE_ROOM)
@@ -202,17 +208,17 @@ public class HotelController extends BaseOperation {
             @ApiResponse(responseCode = "404", description = "Room not found"),
             @ApiResponse(responseCode = "400", description = "Invalid data"),
     })
-    public ResponseEntity<?> deleteRoom (@PathVariable String id) {
+    public ResponseEntity<?> deleteRoom ( @PathVariable String id ) {
         log.info("Attempting to delete room with ID: {}", id);
-
         Either<Errors, DeleteRoomOutput> result = deleteRoomOperationProcessor.process(new DeleteRoomInput(id));
 
         if (result.isRight()) {
-            log.info("Room with ID {} successfully removed", id);
             return ResponseEntity.ok(result.get());
         } else {
             Errors errors = result.getLeft();
-            log.warn("Failed to delete room: {}", errors.getMessage());
+            if (errors.getErrors().stream().anyMatch(error -> error.getMessage().contains("not found"))) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errors.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors.getMessage());
         }
     }

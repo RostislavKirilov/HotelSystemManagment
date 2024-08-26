@@ -28,20 +28,40 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>10.17.0</version>
+            </plugin>
+
         </plugins>
     </build>
 
     <dependencies>
 
         <dependency>
+            <groupId>${parent.groupId}</groupId>
+            <artifactId>persistence</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-test</artifactId>
         <scope>test</scope>
     </dependency>
+
+
         <dependency>
             <groupId>${parent.groupId}</groupId>
             <artifactId>core</artifactId>
             <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>10.17.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

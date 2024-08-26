@@ -1,6 +1,7 @@
 package com.tinqinacademy.hotel.rest.controllers;
 
 
+import com.tinqinacademy.hotel.api.messages.RoomNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,5 +34,11 @@ public class GlobalHandlerException {
             response += "\nCause: " + ex.getCause();
         }
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
+    @ExceptionHandler(RoomNotFoundException.class)
+    public ResponseEntity<String> handleRoomNotFoundException(RoomNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 }

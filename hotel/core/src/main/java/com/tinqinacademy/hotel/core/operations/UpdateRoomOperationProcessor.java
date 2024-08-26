@@ -6,6 +6,7 @@ import com.tinqinacademy.hotel.api.errors.ErrorMapper;
 import com.tinqinacademy.hotel.api.errors.ErrorOutput;
 import com.tinqinacademy.hotel.api.errors.Errors;
 import com.tinqinacademy.hotel.api.messages.ExceptionMessages;
+import com.tinqinacademy.hotel.api.messages.RoomNotFoundException;
 import com.tinqinacademy.hotel.api.operations.updateroom.UpdateRoomInput;
 import com.tinqinacademy.hotel.api.operations.updateroom.UpdateRoomOperation;
 import com.tinqinacademy.hotel.api.operations.updateroom.UpdateRoomOutput;
@@ -34,13 +35,11 @@ public class UpdateRoomOperationProcessor extends BaseOperation implements Updat
 
     @Override
     public Either<Errors, UpdateRoomOutput> process(UpdateRoomInput input) {
-        // Логваме началото на операцията за проверка на налични стаи, за по-добра видимост при отстраняване на проблеми
-        // и за следене на изпълнението на операцията.
         return Try.of(() -> {
                     validate(input);
 
                     Room room = roomRepository.findById(UUID.fromString(input.getRoomId()))
-                            .orElseThrow(() -> new RuntimeException(ExceptionMessages.ROOM_NOT_FOUND + " for ID: " + input.getRoomId()));
+                            .orElseThrow(() -> new RoomNotFoundException(ExceptionMessages.ROOM_NOT_FOUND + " for ID: " + input.getRoomId()));
 
                     room.setRoomFloor(input.getRoom_floor());
                     room.setRoomNumber(input.getRoom_number());
@@ -57,24 +56,28 @@ public class UpdateRoomOperationProcessor extends BaseOperation implements Updat
                 .mapLeft(this::handleErrors);
     }
 
-    private BathroomType validateBathroomType(String bathroomType) {
+
+
+    private BathroomType validateBathroomType ( String bathroomType ) {
         return Try.of(() -> BathroomType.valueOf(bathroomType.toUpperCase()))
                 .getOrElseThrow(() -> new RuntimeException(ExceptionMessages.INVALID_DATA_INPUT + " for BathroomType: " + bathroomType));
     }
 
     private Errors handleErrors(Throwable throwable) {
+        if (throwable instanceof RoomNotFoundException) {
+            return new Errors(List.of(new Error("Room not found")));
+        }
+
         ErrorOutput errorOutput = API.Match(throwable)
                 .of(
-                        caseRoomNotFound(throwable),
                         caseInvalidInput(throwable),
                         defaultCase(throwable)
                 );
 
         Error error = Error.builder()
-                .message(errorOutput.getErrors().get(0).getMessage()) // Assumes there is at least one error
+                .message(errorOutput.getErrors().get(0).getMessage())
                 .build();
 
-        // Create and return an Errors object with a list of Error objects
         return new Errors(List.of(error));
     }
 }
